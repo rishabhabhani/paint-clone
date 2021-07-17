@@ -30,21 +30,63 @@ def draw_grid(win, grid):
                              (j * PIXEL_SIZE, HEIGHT - TOOLBAR_HEIGHT))
 
 
-def draw(win, grid):
+def draw(win, grid, buttons):
     win.fill(BG_COLOR)
     draw_grid(win, grid)
+
+    for button in buttons:
+        button.draw(win)
+
     pygame.display.update()
+
+
+def get_row_col_from_pos(pos):
+    x, y = pos
+    row = y // PIXEL_SIZE
+    col = x // PIXEL_SIZE
+
+    if row >= ROWS:
+        raise IndexError
+
+    return row, col
 
 
 run = True
 clock = pygame.time.Clock()
 grid = init_grid(ROWS, COLS, BG_COLOR)
+drawing_color = BLACK
+
+button_y = HEIGHT - TOOLBAR_HEIGHT / 2 - 25
+buttons = [
+    Button(10, button_y, 50, 50, BLACK),
+    Button(70, button_y, 50, 50, RED),
+    Button(130, button_y, 50, 50, GREEN),
+    Button(190, button_y, 50, 50, BLUE),
+    Button(250, button_y, 50, 50, WHITE, "Erase"),
+    Button(310, button_y, 50, 50, WHITE, "Clear"),
+]
 
 while run:
     clock.tick(FPS)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-    draw(WIN, grid)
+
+        if pygame.mouse.get_pressed()[0]:
+            pos = pygame.mouse.get_pos()
+            try:
+                row, col = get_row_col_from_pos(pos)
+                grid[row][col] = drawing_color
+            except IndexError:
+                for button in buttons:
+                    if not button.clicked(pos):
+                        continue
+
+                    drawing_color = button.color
+                    if button.text == "Clear":
+                        grid = init_grid(ROWS, COLS, BG_COLOR)
+                        drawing_color = BLACK
+
+    draw(WIN, grid, buttons)
 
 pygame.quit()
